@@ -86,10 +86,10 @@
 </style>
 </head>
 <body>
-  <h2>📰 Google News -Idaho & US</h2>
+  <h2>📰 Google News - Idaho & US</h2>
   <div id="feed">Loading news...</div>
   <div id="more-link"></div>
-
+ 
   <script>
     const feedUrl = encodeURIComponent("https://news.google.com/rss/search?q=Idaho+OR+US&hl=en-US&gl=US&ceid=US:en");
     const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`;
@@ -112,24 +112,27 @@
           div.href = item.link;
           div.target = "_blank";
           div.rel = "noopener noreferrer";
-
-          // Try to get an image from multiple sources
+        
           let thumbnail = item.thumbnail
             || (item.enclosure && item.enclosure.link)
             || (item["media:content"] && item["media:content"].url)
             || null;
-
+        
           if (!thumbnail && item.description) {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = item.description;
             const img = tempDiv.querySelector('img');
             if (img) thumbnail = img.src;
           }
-
+        
+          if (thumbnail) {
+            thumbnail = `https://images.weserv.nl/?url=${encodeURIComponent(thumbnail.replace(/^https?:\/\//, ''))}`;
+          }
+        
           const tempDesc = document.createElement('div');
           tempDesc.innerHTML = item.description || '';
           const plainDescription = tempDesc.textContent || tempDesc.innerText || '';
-
+        
           div.innerHTML = `
             ${thumbnail ? `<img src="${thumbnail}" alt="" class="news-thumb"/>` : ''}
             <div class="news-content">
@@ -137,7 +140,7 @@
               <p class="news-description">${plainDescription.substring(0, 120)}…</p>
             </div>
           `;
-
+        
           feed.appendChild(div);
         });
 
