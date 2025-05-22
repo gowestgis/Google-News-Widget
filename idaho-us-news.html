@@ -2,34 +2,58 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Idaho & US News Feed</title>
+<title>Idaho & US News - Magazine Style</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 1em; background: #f9f9f9; color: #333; }
-  h2 { color: #cc0000; margin-bottom: 0.5em; }
-  #feed { max-width: 600px; }
-  .news-item {
-    display: flex;
-    align-items: flex-start;
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 1em auto;
+    max-width: 800px;
+    background: #fafafa;
+    color: #222;
+  }
+  h2 {
+    color: #cc0000;
     margin-bottom: 1em;
-    background: #fff;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    text-align: center;
+    font-weight: 700;
+    font-size: 2rem;
+  }
+  #feed {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1em;
+  }
+  .news-item {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.3s ease;
+  }
+  .news-item:hover {
+    box-shadow: 0 6px 16px rgb(0 0 0 / 0.15);
   }
   .news-thumb {
-    width: 80px;
-    height: 80px;
+    width: 100%;
+    height: 180px;
     object-fit: cover;
-    margin-right: 10px;
-    border-radius: 4px;
-    flex-shrink: 0;
   }
   .news-content {
+    padding: 0.75em 1em 1em;
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
   }
   .news-title {
-    margin: 0 0 0.3em 0;
-    font-size: 1.1em;
+    margin: 0 0 0.5em;
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    flex-grow: 1;
   }
   .news-title a {
     color: #cc0000;
@@ -40,14 +64,31 @@
   }
   .news-description {
     margin: 0;
-    font-size: 0.9em;
     color: #555;
+    font-size: 0.9rem;
+    line-height: 1.25;
+  }
+  #more-link {
+    display: block;
+    margin: 2em auto 0;
+    max-width: 800px;
+    text-align: center;
+    font-weight: 600;
+  }
+  #more-link a {
+    color: #cc0000;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+  #more-link a:hover {
+    text-decoration: underline;
   }
 </style>
 </head>
 <body>
   <h2>📰 Idaho & US News</h2>
   <div id="feed">Loading news...</div>
+  <div id="more-link"></div>
 
   <script>
     const feedUrl = encodeURIComponent("https://news.google.com/rss/search?q=Idaho+OR+US&hl=en-US&gl=US&ceid=US:en");
@@ -57,6 +98,7 @@
       .then(response => response.json())
       .then(data => {
         const feed = document.getElementById("feed");
+        const moreLinkDiv = document.getElementById("more-link");
         feed.innerHTML = "";
 
         if (data.status !== "ok") {
@@ -64,11 +106,14 @@
           return;
         }
 
-        data.items.slice(0, 6).forEach(item => {
-          const div = document.createElement("div");
+        data.items.slice(0, 10).forEach(item => {
+          const div = document.createElement("a");
           div.className = "news-item";
+          div.href = item.link;
+          div.target = "_blank";
+          div.rel = "noopener noreferrer";
 
-          // Try to get an image from the enclosure, media, or description
+          // Try to get an image from multiple sources
           let thumbnail = item.thumbnail
             || (item.enclosure && item.enclosure.link)
             || (item["media:content"] && item["media:content"].url)
@@ -86,17 +131,17 @@
           const plainDescription = tempDesc.textContent || tempDesc.innerText || '';
 
           div.innerHTML = `
-            <a href="${item.link}" target="_blank" rel="noopener">
-              ${thumbnail ? `<img src="${thumbnail}" alt="" class="news-thumb"/>` : ''}
-              <div class="news-content">
-                <h3 class="news-title">${item.title}</h3>
-                <p class="news-description">${plainDescription.substring(0, 100)}…</p>
-              </div>
-            </a>
+            ${thumbnail ? `<img src="${thumbnail}" alt="" class="news-thumb"/>` : ''}
+            <div class="news-content">
+              <h3 class="news-title">${item.title}</h3>
+              <p class="news-description">${plainDescription.substring(0, 120)}…</p>
+            </div>
           `;
 
           feed.appendChild(div);
         });
+
+        moreLinkDiv.innerHTML = `<a href="https://news.google.com/search?q=Idaho+OR+US&hl=en-US&gl=US&ceid=US:en" target="_blank" rel="noopener noreferrer">See more Idaho & US news on Google News »</a>`;
       })
       .catch(err => {
         document.getElementById("feed").innerHTML = "Unable to load news at this time.";
