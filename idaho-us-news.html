@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Idaho & US News Feed</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 1em; background: #f9f9f9; color: #333; }
+  h2 { color: #cc0000; margin-bottom: 0.5em; }
+  #feed { max-width: 600px; }
+  .news-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1em;
+    background: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  }
+  .news-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    margin-right: 10px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .news-content {
+    flex-grow: 1;
+  }
+  .news-title {
+    margin: 0 0 0.3em 0;
+    font-size: 1.1em;
+  }
+  .news-title a {
+    color: #cc0000;
+    text-decoration: none;
+  }
+  .news-title a:hover {
+    text-decoration: underline;
+  }
+  .news-description {
+    margin: 0;
+    font-size: 0.9em;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+  <h2>📰 Idaho & US News</h2>
+  <div id="feed">Loading news...</div>
+
+  <script>
+    const feedUrl = encodeURIComponent("https://news.google.com/rss/search?q=Idaho+OR+US&hl=en-US&gl=US&ceid=US:en");
+    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`;
+
+    fetch(apiUrl)
+      .then(response => response.json())
+      .then(data => {
+        const feed = document.getElementById("feed");
+        feed.innerHTML = "";
+
+        if (data.status !== "ok") {
+          feed.innerHTML = "Failed to load news.";
+          return;
+        }
+
+        data.items.slice(0, 6).forEach(item => {
+          const div = document.createElement("div");
+          div.className = "news-item";
+
+          // Try to get an image from the enclosure, media, or description
+          let thumbnail = item.thumbnail
+            || (item.enclosure && item.enclosure.link)
+            || (item["media:content"] && item["media:content"].url)
+            || null;
+
+          if (!thumbnail && item.description) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = item.description;
+            const img = tempDiv.querySelector('img');
+            if (img) thumbnail = img.src;
+          }
+
+          const tempDesc = document.createElement('div');
+          tempDesc.innerHTML = item.description || '';
+          const plainDescription = tempDesc.textContent || tempDesc.innerText || '';
+
+          div.innerHTML = `
+            <a href="${item.link}" target="_blank" rel="noopener">
+              ${thumbnail ? `<img src="${thumbnail}" alt="" class="news-thumb"/>` : ''}
+              <div class="news-content">
+                <h3 class="news-title">${item.title}</h3>
+                <p class="news-description">${plainDescription.substring(0, 100)}…</p>
+              </div>
+            </a>
+          `;
+
+          feed.appendChild(div);
+        });
+      })
+      .catch(err => {
+        document.getElementById("feed").innerHTML = "Unable to load news at this time.";
+        console.error("Fetch error:", err);
+      });
+  </script>
+</body>
+</html>
